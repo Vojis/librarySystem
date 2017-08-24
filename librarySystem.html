@@ -1,0 +1,84 @@
+<script src="https://rawgit.com/Vojis/ab280c9710c359c187dc685262361a14/raw/8e30a9888232af8d5600d97f0f920462badf1c5d/simpleTest.js"></script>
+<script>
+
+(function () {
+var libraryStorage = {};
+// function used to save a new libary to libraryStorage.
+function librarySystem(libraryName, dependendiesArray, callback) {
+  if (arguments.length === 3) {
+    libraryStorage[libraryName] = {
+ 	  dependendiesArray: dependendiesArray,
+	  callback: callback,
+	  callbackAlreadyRun: false
+	  }
+	} else if (arguments.length === 1 && typeof libraryName === 'string') {
+      return libraryLoader(libraryName);
+	}
+  };
+// function used to load the library that is being called.
+function libraryLoader(libraryName) {
+  var currentLibrary = libraryStorage[libraryName];
+  var dependenciesReturnValues; //  only useful for libraries that have assigned dependencies
+    if (!currentLibrary.callbackAlreadyRun) {
+	  dependenciesReturnValues = currentLibrary.dependendiesArray.map(function (dependency) {
+	    return librarySystem(dependency);
+	  });
+	  var loadLibraryWithOrWithoutDependencies = currentLibrary.callback.apply(this, dependenciesReturnValues);
+	  currentLibrary.callbackAlreadyRun = true;
+	  return loadLibraryWithOrWithoutDependencies;
+	}
+  }
+window.librarySystem = librarySystem;
+})();
+
+tests({
+	'It should store and load libraries with no dependenciesArray.': function() {
+	  librarySystem('sodaWater', [], function () {
+	  	return 'I am drinking soda water';
+	  });
+	  eq(librarySystem('sodaWater'), 'I am drinking soda water');
+	},
+	'It should store and load libraries with one dependency.': function() {
+	  librarySystem('whatAmIDoing', [], function () {
+	  	return 'doing laundry';
+	  });
+	  librarySystem('exactTime', ['whatAmIDoing'], function (whatAmIDoing) {
+	  	return 'It is exactly 6:10 PM and I am ' + whatAmIDoing;
+	  });
+	  eq(librarySystem('exactTime'), 'It is exactly 6:10 PM and I am doing laundry');
+	},
+	'It should store and load libraries with more than one dependency.': function() {
+	  librarySystem('name', [], function() {
+	    return 'Gordon';
+	  });
+	  librarySystem('company', [], function() {
+	    return 'Watch and Code';
+	  });
+	  librarySystem('workBlurb', ['name', 'company'], function(name, company) {
+	  return name + ' works at ' + company;
+	  });
+	  eq(librarySystem('workBlurb'), 'Gordon works at Watch and Code');
+	},
+	'It should load libraries out of order.': function() {
+	  librarySystem('workBlurb', ['name', 'company'], function(name, company) {
+	  return name + ' works at ' + company;
+	  });	  
+	  librarySystem('name', [], function() {
+	    return 'Gordon';
+	  });
+	  librarySystem('company', [], function() {
+	    return 'Watch and Code';
+	  });
+	  eq(librarySystem('workBlurb'), 'Gordon works at Watch and Code');
+	},
+	'It should run callback only once for each library.': function() {
+	  var numberOfTimesCallbackHasRun = 0;
+	  librarySystem('sodaWater', [], function () {
+	  	numberOfTimesCallbackHasRun++;
+	  });
+	  librarySystem('sodaWater');
+	  librarySystem('sodaWater');
+	  eq(numberOfTimesCallbackHasRun, 1);
+	}
+});
+</script>
