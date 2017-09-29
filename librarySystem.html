@@ -3,10 +3,10 @@
 (function () {
 var libraryStorage = {};
 // function used to save a new libary to libraryStorage.
-function librarySystem(libraryName, dependendiesArray, callback) {
+function librarySystem(libraryName, dependenciesArray, callback) {
 	if (arguments.length === 3) {
 		libraryStorage[libraryName] = {
-		dependendiesArray: dependendiesArray,
+		dependenciesArray: dependenciesArray,
 		callback: callback,
 		callbackAlreadyRun: false
 		}
@@ -17,10 +17,9 @@ function librarySystem(libraryName, dependendiesArray, callback) {
 // function used to load the library that is being called.
 function libraryLoader(libraryName) {
 	var currentLibrary = libraryStorage[libraryName];
-	var dependenciesReturnValues; //  only useful for libraries that have assigned dependencies
 		if (!currentLibrary.callbackAlreadyRun) {
-		dependenciesReturnValues = currentLibrary.dependendiesArray.map(function (dependency) {
-			return librarySystem(dependency);
+		var dependenciesReturnValues = currentLibrary.dependenciesArray.map(function (dependency) {
+			return libraryLoader(dependency);
 		});
 		var loadLibraryWithOrWithoutDependencies = currentLibrary.callback.apply(this, dependenciesReturnValues);
 		currentLibrary.callbackAlreadyRun = true;
