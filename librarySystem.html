@@ -1,33 +1,35 @@
 <script src="https://rawgit.com/Vojis/ab280c9710c359c187dc685262361a14/raw/8e30a9888232af8d5600d97f0f920462badf1c5d/simpleTest.js"></script>
 <script>
-(function () {
-var libraryStorage = {};
-// function used to save a new libary to libraryStorage.
-function librarySystem(libraryName, dependenciesArray, callback) {
-	if (arguments.length === 3) {
-		libraryStorage[libraryName] = {
-		dependenciesArray: dependenciesArray,
-		callback: callback,
-		callbackAlreadyRun: false
-		}
-	} else if (arguments.length === 1 && typeof libraryName === 'string') {
-			return libraryLoader(libraryName);
-	}
-};
-// function used to load the library that is being called.
-function libraryLoader(libraryName) {
-	var currentLibrary = libraryStorage[libraryName];
-		if (!currentLibrary.callbackAlreadyRun) {
-		var dependenciesReturnValues = currentLibrary.dependenciesArray.map(function (dependency) {
-			return libraryLoader(dependency);
-		});
-		var loadLibraryWithOrWithoutDependencies = currentLibrary.callback.apply(this, dependenciesReturnValues);
-		currentLibrary.callbackAlreadyRun = true;
-		return loadLibraryWithOrWithoutDependencies;
-		}
-}
-window.librarySystem = librarySystem;
+(function() {
+  var libraryStorage = {};
+  function librarySystem(libraryName, dependenciesArray, callback) {
+    if (arguments.length > 1) {
+      libraryStorage[libraryName] = {
+        dependenciesArray: dependenciesArray,
+        callback: callback,
+        callbackRan: false
+      }
+    } else {
+      return libraryLoader(libraryName);
+    }
+    function libraryLoader(libraryName) {
+    var currentLibrary = libraryStorage[libraryName];
+      if (!currentLibrary.callbackRan) {
+        var dependenciesValues = currentLibrary.dependenciesArray.map(function (dependency) {
+          return libraryLoader(dependency);
+      });
+        var loadedLibrary = currentLibrary.callback.apply(null, dependenciesValues);
+        currentLibrary.loadedLibrary = loadedLibrary;
+        currentLibrary.callbackRan = true;
+        return loadedLibrary;
+      } else if (currentLibrary.callbackRan) {
+        return currentLibrary.loadedLibrary;
+      }
+    }
+  }
+  window.librarySystem = librarySystem;
 })();
+
 tests({
 	'It should store and load libraries with no dependenciesArray.': function() {
 		librarySystem('sodaWater', [], function () {
